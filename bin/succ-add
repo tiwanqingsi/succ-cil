@@ -1,0 +1,83 @@
+#!/usr/bin/env node
+console.log("新增");
+
+// 交互式命令行
+const inquirer = require("inquirer");
+// 修改控制台字符串的样式
+const chalk = require("chalk");
+// node 内置文件模块
+const fs = require("fs");
+// 读取根目录下的 template.json
+const tplObj = require(`${__dirname}/../template`);
+
+// 自定义交互式命令行的问题及简单的校验
+let question = [
+  {
+    name: "name",
+    type: "input",
+    message: "请输入模板名称",
+    validate(val) {
+      if (val === "") {
+        return "Name is required!";
+      } else if (tplObj[val]) {
+        return "Template has already existed!";
+      } else {
+        return true;
+      }
+    },
+  },
+  // {
+  //   name: "url",
+  //   type: "input",
+  //   message: "请输入模板地址",
+  //   validate(val) {
+  //     if (val === "") return "The url is required!";
+  //     return true;
+  //   },
+  // },
+];
+
+inquirer.prompt(question).then((answers) => {
+  // answers 就是用户输入的内容，是个对象
+  let { name, url } = answers;
+  mkdirs(name, url, () => {});
+});
+
+function mkdirs(pathname, url, callback) {
+  fs.exists(`./${pathname}`, function (exists) {
+    // console.log(exists ? "创建成功" : "创建失败");
+    if (exists) {
+    } else {
+      fs.mkdirSync(pathname);
+      fs.writeFile(
+        `./${pathname}index.vue`,
+        `<template>
+      <div class="${pathname.replace(/([A-Z])/g, "_$1").toLowerCase()}_page">
+      </div>
+    </template>
+    <script>
+    export default {
+      name: "${pathname}",
+      data() {
+        return {
+        }
+      },
+      created() { },
+      methods: {},
+      computed: {},
+      watch: {},
+    };
+    </script>
+    <style lang="scss" scoped>
+    </style>`,
+        function (error) {
+          if (error) {
+            console.log(error);
+            return false;
+          }
+          console.log("写入成功");
+        }
+      );
+    }
+  });
+}
